@@ -82,9 +82,16 @@ beginButton.addEventListener("click", () => {
   startGame();
 });
 
+let wordsToShow; // Declare the variable to store the words to be shown
+
 function startGame() {
   const difficultyValue = parseInt(document.getElementById("game-difficulty").value, 10);
-  const wordsToShow = difficultyValue;
+  currentWordIndex = 0;
+  wordsToShow = wordArray.slice(currentWordIndex, currentWordIndex + difficultyValue);
+
+  function updateWordDisplay() {
+    word.innerHTML = `Word: ${wordsToShow[0]}`;
+  }
 
   function updateTimerDisplay(timeLeft) {
     timerElement.innerHTML = `Time left: ${timeLeft} seconds`;
@@ -97,33 +104,38 @@ function startGame() {
     updateTimerDisplay(timeLeft);
 
     if (timeLeft === 0) {
-      showElement(backButton);
-      word.innerHTML = `
-        GAME OVER! You ran out of time.
-        <br><br><i>Refresh the browser or click "Try Again" to return to the home screen!<i>
-      `;
-      hideElement(inputElement);
-      clearInterval(timerInterval);
+      endGame(`GAME OVER! You ran out of time.`);
     }
+  }
+
+  function endGame(message) {
+    showElement(backButton);
+    word.innerHTML = `${message}<br><br><i>Refresh the browser or click "Try Again" to return to the home screen!<i>`;
+    hideElement(inputElement);
+    clearInterval(timerInterval);
   }
 
   function keyUpHandler(e) {
     const inputWord = inputElement.value.toLowerCase().trim();
-    const currentWord = wordArray[currentWordIndex].toLowerCase();
-
+    const currentWord = wordsToShow[0].toLowerCase();
+  
     if (inputWord === currentWord) {
-      currentWordIndex++;
-
-      if (currentWordIndex >= wordsToShow) {
-        showElement(backButton);
-        showCongratulationsScreen(20 - parseInt(timerElement.textContent.split(" ")[2]));
-        hideElement(inputElement);
-        clearInterval(timerInterval);
-      } else {
-        word.innerHTML = `Word: ${wordArray[currentWordIndex]}`;
-        inputElement.value = "";
-        hideElement(backButton);
+      wordsToShow.shift(); 
+  
+      if (wordsToShow.length === 0) {
+        currentWordIndex += difficultyValue;
+        wordsToShow = wordArray.slice(currentWordIndex, currentWordIndex + difficultyValue - difficultyValue);
+  
+        if (wordsToShow.length === 0) {
+          const timeTaken = 20 - parseInt(timerElement.textContent.split(" ")[2]);
+          endGame(`Congratulations! Your time was: ${timeTaken} seconds!`);
+          return;
+        }
       }
+  
+      updateWordDisplay();
+      inputElement.value = "";
+      hideElement(backButton);
     }
   }
 
